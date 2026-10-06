@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "670092937684",
+    "project_id": "abu-hashem-shop-cf4fc",
+    "storage_bucket": "abu-hashem-shop-cf4fc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:670092937684:android:280cb472ec4b442993ee41",
+        "android_client_info": {
+          "package_name": "com.example.shop_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrWBf8C6kC8yYe-VsgXWlJ0-MD0EKnDok"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

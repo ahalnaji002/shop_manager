@@ -1,0 +1,122 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function activeUser() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.isActive == true;
+    }
+
+    function owner() {
+      return activeUser()
+        && get(userPath(request.auth.uid)).data.role == 'owner';
+    }
+
+    function worker() {
+      return activeUser()
+        && get(userPath(request.auth.uid)).data.role == 'worker';
+    }
+
+    function shopUser() {
+      return owner() || worker();
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || owner());
+      allow create, update, delete: if owner();
+    }
+
+    match /customers/{customerId} {
+      allow read: if shopUser();
+      allow create: if shopUser()
+        && request.resource.data.keys().hasOnly([
+          'name', 'phone', 'currentDebt', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'name', 'phone', 'currentDebt', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.phone is string
+        && request.resource.data.currentDebt == 0
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update, delete: if owner();
+    }
+
+    match /products/{productId} {
+      allow read: if shopUser();
+      allow create: if owner()
+        && request.resource.data.currentStock == 0;
+      allow update: if owner()
+        && request.resource.data.currentStock == resource.data.currentStock;
+      allow delete: if owner();
+    }
+
+    match /purchase_batches/{batchId} {
+      allow read: if owner();
+      allow create, update, delete: if false;
+    }
+
+    match /sales/{saleId} {
+      allow read: if shopUser();
+      // Sales, their items, stock changes, and customer balances are written
+      // together by trusted callable functions using the Admin SDK.
+      allow create, update, delete: if false;
+
+      match /items/{itemId} {
+        allow read: if shopUser();
+        allow create, update, delete: if false;
+      }
+    }
+
+    match /saleFinancials/{saleId} {
+      allow read: if owner();
+      allow create, update, delete: if false;
+    }
+
+    match /debtPayments/{paymentId} {
+      allow read: if shopUser();
+      allow create, update, delete: if false;
+    }
+
+    match /purchases/{purchaseId} {
+      allow read, write: if owner();
+
+      match /items/{itemId} {
+        allow read, write: if owner();
+      }
+    }
+
+    match /stockMovements/{movementId} {
+      allow read: if shopUser();
+      allow create, update, delete: if false;
+    }
+
+    match /expenses/{expenseId} {
+      allow read, write: if owner();
+    }
+
+    match /settings/{settingId} {
+      allow read, write: if owner();
+    }
+
+    match /activityLogs/{logId} {
+      allow read: if owner();
+      allow create, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

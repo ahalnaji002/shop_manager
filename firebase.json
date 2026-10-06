@@ -1,0 +1,43 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "abu-hashem-shop-cf4fc",
+          "appId": "1:670092937684:android:280cb472ec4b442993ee41",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "abu-hashem-shop-cf4fc",
+          "configurations": {
+            "android": "1:670092937684:android:280cb472ec4b442993ee41",
+            "ios": "1:670092937684:ios:fcaacc939e5908a293ee41",
+            "macos": "1:670092937684:ios:fcaacc939e5908a293ee41",
+            "web": "1:670092937684:web:95189035a1c8d93a93ee41",
+            "windows": "1:670092937684:web:ac642e2a002e6c2193ee41"
+          }
+        }
+      }
+    }
+  },
+  "functions": {
+    "runtime": "nodejs22",
+    "source": "functions",
+    "predeploy": [
+      "npm --prefix functions run build"
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    }
+  }
+}
