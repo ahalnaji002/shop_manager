@@ -37,6 +37,7 @@ migrate_working_dir/
 /functions/node_modules/
 /functions/lib/
 /functions/.firebase/
+/.emulator-data/
 
 # Local secrets and signing credentials
 .env

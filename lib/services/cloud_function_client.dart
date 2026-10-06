@@ -19,6 +19,11 @@ class CloudFunctionException implements Exception {
 /// on every configured Flutter target, including Windows desktop.
 class CloudFunctionClient {
   static const _timeout = Duration(seconds: 30);
+  static const _useEmulators = bool.fromEnvironment('USE_FIREBASE_EMULATORS');
+  static const _emulatorHost = String.fromEnvironment(
+    'FIREBASE_EMULATOR_HOST',
+    defaultValue: '127.0.0.1',
+  );
   static final _client = http.Client();
 
   static Future<Map<String, dynamic>> call(
@@ -41,10 +46,15 @@ class CloudFunctionClient {
     }
 
     final projectId = Firebase.app().options.projectId;
-    final uri = Uri.https(
-      'us-central1-$projectId.cloudfunctions.net',
-      functionName,
-    );
+    final uri = _useEmulators
+        ? Uri.http(
+            '$_emulatorHost:5001',
+            '/$projectId/us-central1/$functionName',
+          )
+        : Uri.https(
+            'us-central1-$projectId.cloudfunctions.net',
+            functionName,
+          );
     late final http.Response response;
     try {
       response = await _client

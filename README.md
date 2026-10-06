@@ -17,33 +17,64 @@ Flutter application for shop sales, inventory, customers, debt tracking, expense
 - Debt payments are distributed across a customer's oldest active invoices.
 - Owners can add stock and cancel eligible invoices through server-side transactions.
 - Workers can read shop data and add customers, while financial and stock records are written by trusted functions.
-- Historical sale cost fields must be moved into `saleFinancials` before deploying the stricter rules. The migration command defaults to a read-only dry run and requires two matching project settings before writing.
 - Owner reports, expenses, customer statements, PDF export, and activity logs.
 
-## Setup
+## Local learning setup (no billing)
 
-1. Install Flutter, Node.js 22, and the Firebase CLI.
-2. Run `flutter pub get` from the project root.
-3. Run `npm --prefix functions install` to install the callable-function dependencies.
-4. Authenticate with Firebase CLI and select the intended project before deployment.
-5. Run the rule tests against the local Firestore emulator:
+The app can run against the Firebase Local Emulator Suite. This keeps sign-in, Firestore data, and Cloud Functions on your computer. It does not deploy anything or modify the live Firebase project.
 
-   ```powershell
-   firebase emulators:exec --project demo-shop-manager-rules --only firestore "npm --prefix functions run test:rules"
-   ```
-
-6. Build the function source with `npm --prefix functions run build`.
-7. Before deployment, run the financial migration dry run with `GCLOUD_PROJECT` set to the intended project:
+1. Install Flutter, Node.js 22, Java 21, and the Firebase CLI.
+2. From the project root, install the app and function dependencies:
 
    ```powershell
-   $env:GCLOUD_PROJECT = "your-project-id"
-   npm --prefix functions run migrate:sale-financials
+   flutter pub get
+   npm ci --prefix functions
    ```
 
-   Review the counts. To apply the migration, set `CONFIRM_SHOP_MIGRATION` to the exact same project ID and add `-- --apply` to the command. The script uses Application Default Credentials; it does not use a downloaded service-account key.
-8. To publish after reviewing the migration output and billing plan, deploy with `firebase deploy --only firestore:rules,functions`.
+3. Start the local Auth, Firestore, and Functions emulators:
 
-Cloud Functions deployment requires a Firebase project on the Blaze plan. The local emulator and rule tests do not write to production. Run the historical migration before deploying the rules: Firestore rules cannot hide selected fields inside a document, so old cost/profit values must be removed from worker-readable sale documents. Deploy the rules and functions before releasing a client that calls the new functions; older clients that still write sales, payments, stock intake, or cancellations directly will be denied those operations.
+   ```powershell
+   firebase emulators:start --project abu-hashem-shop-cf4fc --only auth,firestore,functions
+   ```
+
+   The Firebase CLI needs Java 21 for the Firestore emulator. On Windows, if Android Studio is installed, its bundled Java can be used in the same PowerShell window:
+
+   ```powershell
+   $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
+   $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+   ```
+
+   The emulator dashboard is at <http://127.0.0.1:4000>. Emulator data is temporary unless you export it.
+
+4. In the dashboard, create a test account under Authentication. Then in Firestore, add a document at `users/{that-account-uid}` with fields such as `role: "owner"`, `isActive: true`, and `name: "Test Owner"`. This user exists only in the local emulator. Add products in the app after signing in.
+5. In a second PowerShell window, run the Windows app with emulator routing enabled:
+
+   ```powershell
+   flutter run -d windows --dart-define=USE_FIREBASE_EMULATORS=true --dart-define=FIREBASE_EMULATOR_HOST=127.0.0.1
+   ```
+
+   Run the app using this command when learning locally. A normal `flutter run` uses the Firebase project configured in `lib/firebase_options.dart`.
+
+## Local checks
+
+Run Firestore security-rule tests against the emulator:
+
+```powershell
+firebase emulators:exec --project demo-shop-manager-rules --only firestore "npm --prefix functions run test:rules"
+```
+
+Build the Functions TypeScript source and check dependency advisories:
+
+```powershell
+npm --prefix functions run build
+npm --prefix functions audit
+```
+
+## Deployment notes
+
+This learning workflow does not require changing the Firebase billing plan. Cloud Functions are run locally in the emulator. Do not run `firebase deploy` as part of the local workflow.
+
+If the app is ever intentionally deployed, historical sale cost fields must first be moved into `saleFinancials`. The migration command defaults to a read-only dry run and requires two matching project settings before writing. Review the counts before any future migration. Firestore rules cannot hide selected fields inside a document, so old cost/profit values must be removed from worker-readable sale documents. Deploy the rules and functions before releasing a client that calls the new functions; older clients that still write sales, payments, stock intake, or cancellations directly will be denied those operations.
 
 ## Dependencies
 

@@ -14,6 +14,8 @@ before(async () => {
   environment = await initializeTestEnvironment({
     projectId: 'demo-shop-manager-rules',
     firestore: {
+      host: '127.0.0.1',
+      port: 8189,
       rules: fs.readFileSync(path.join(__dirname, '..', '..', 'firestore.rules'), 'utf8'),
     },
   });
