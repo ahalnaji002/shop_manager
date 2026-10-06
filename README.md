@@ -55,6 +55,16 @@ The app can run against the Firebase Local Emulator Suite. This keeps sign-in, F
 
    Run the app using this command when learning locally. A normal `flutter run` uses the Firebase project configured in `lib/firebase_options.dart`.
 
+### Install a development APK on a phone
+
+Connect the phone and computer to the same Wi-Fi. Find the computer's Wi-Fi IPv4 address with `ipconfig` (for example, `192.168.1.149`). Start the emulators using the command above; they listen on the local network for this development setup. Then build the APK with the computer's current address:
+
+```powershell
+flutter build apk --debug --dart-define=USE_FIREBASE_EMULATORS=true --dart-define=FIREBASE_EMULATOR_HOST=192.168.1.149
+```
+
+Install `build\app\outputs\flutter-apk\app-debug.apk` on the phone and sign in with the test account created in the local Auth emulator. Keep the emulators running while using the app. If the computer's Wi-Fi address changes, rebuild the APK with the new address. Android may ask to allow local network access through Windows Firewall. This debug APK permits local HTTP only for emulator connections; it is for learning and should not be used as a production release.
+
 ## Local checks
 
 Run Firestore security-rule tests against the emulator:
