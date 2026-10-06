@@ -96,16 +96,23 @@ async function migrateSale(saleRef: DocumentReference<DocumentData>): Promise<bo
   });
 }
 
-do {
-  const sales = db.collection("sales").orderBy(FieldPath.documentId());
-  const query = last ? sales.startAfter(last).limit(pageSize) : sales.limit(pageSize);
-  const page = await query.get();
-  for (const sale of page.docs) {
-    inspected++;
-    if (await migrateSale(sale.ref)) needingMigration++;
-  }
-  last = page.docs.at(-1);
-} while (last);
+async function main(): Promise<void> {
+  do {
+    const sales = db.collection("sales").orderBy(FieldPath.documentId());
+    const query = last ? sales.startAfter(last).limit(pageSize) : sales.limit(pageSize);
+    const page = await query.get();
+    for (const sale of page.docs) {
+      inspected++;
+      if (await migrateSale(sale.ref)) needingMigration++;
+    }
+    last = page.docs.at(-1);
+  } while (last);
 
-console.log(`${applyChanges ? "Migrated" : "Would migrate"} ${needingMigration} of ${inspected} sales for ${projectId}.`);
-if (!applyChanges) console.log("Read-only dry run. Add --apply and CONFIRM_SHOP_MIGRATION=<project id> to write changes.");
+  console.log(`${applyChanges ? "Migrated" : "Would migrate"} ${needingMigration} of ${inspected} sales for ${projectId}.`);
+  if (!applyChanges) console.log("Read-only dry run. Add --apply and CONFIRM_SHOP_MIGRATION=<project id> to write changes.");
+}
+
+void main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});
